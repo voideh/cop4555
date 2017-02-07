@@ -59,4 +59,40 @@ let rec gencut n xs =
     | (n, x::xs) -> let (left, right) =
                      gencut (n-1) xs
                     (x::left, right)
-           
+
+let mycut xs = gencut (List.length xs / 2) xs
+
+
+(*
+Write an F# function shuffle xs that takes an even-length list, cuts it into two equal-sized pieces, and then interleaves the pieces:
+*)
+let shuffle xs = interleave (mycut xs)
+
+(*
+Write an F# function countshuffles n that counts how many calls to shuffle on a deck of n distinct "cards" it takes to put the deck back into its original order:
+  > countshuffles 4;;
+  val it : int = 2
+(To see that this result is correct, note that shuffle [1;2;3;4] = [1;3;2;4], and shuffle [1;3;2;4] = [1;2;3;4].) What is countshuffles 52?
+*)
+
+let rec countaux = function
+    | (d,t) when d = t -> 0
+    | (d,t) -> 1 + countaux(d, shuffle t)
+   
+let countshuffles n =
+    let deck = [1..n]
+    let target = shuffle deck
+    1 + countaux(deck, target)
+(*
+Write an uncurried F# function cartesian (xs, ys) that takes as input two lists xs and ys and returns a list of pairs that represents the Cartesian product of xs and ys. 
+(The pairs in the Cartesian product may appear in any order.) For example,
+ > cartesian (["a"; "b"; "c"], [1; 2]);;
+  val it : (string * int) list =
+  [("a", 1); ("b", 1); ("c", 1); ("a", 2); ("b", 2); ("c", 2)]
+*)
+let createcoord x y = (x,y)
+let rec cartesian (xs, ys) = 
+    match (xs, ys) with
+    | (xs, []) -> []
+    | ([], y::ys) -> []
+    | (x::xs, ys) -> (List.map(createcoord x) ys)@cartesian(xs, ys)
