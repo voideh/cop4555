@@ -96,3 +96,33 @@ let rec cartesian (xs, ys) =
     | (xs, []) -> []
     | ([], y::ys) -> []
     | (x::xs, ys) -> (List.map(createcoord x) ys)@cartesian(xs, ys)
+
+(*
+An F# list can be thought of as representing a set, where the order of the elements in the list is irrelevant. Write an F# function powerset such that powerset set returns the set of all subsets of set. For example,
+  > powerset [1;2;3];;
+  val it : int list list
+  = [[]; [3]; [2]; [2; 3]; [1]; [1; 3]; [1; 2]; [1; 2; 3]]
+*)
+let smash x xs = x::xs
+let rec powerset = function
+| [] -> [[]]
+| x::xs -> (powerset xs)@(List.map(smash x) (powerset xs))
+
+(* The transpose of a matrix M is the matrix obtained by reflecting Mabout its diagonal. For example, the transpose of
+  / 1 2 3 \
+  \ 4 5 6 /
+is
+  / 1 4 \
+  | 2 5 |
+  \ 3 6 /
+An m-by-n matrix can be represented in F# as a list of m rows, each of which is a list of length n. For example, the first matrix above is represented as the list
+  [[1;2;3];[4;5;6]] 
+  
+   transpose [[1;2;3];[4;5;6]];;
+  val it : int list list = [[1; 4]; [2; 5]; [3; 6]]*)
+
+// not really sure this is the best thing, but it works..
+let rec transpose xs =
+    match xs with
+    | [x::xs; y::ys] -> [x;y]::transpose [xs;ys]
+    | _ -> []
