@@ -70,3 +70,76 @@ let rec interpret_tree tree =
                       [BEGIN] @ expy @ expz
 
 let buildandinterp toks = toks |> buildTree |> interpret_tree
+
+// Non recursive fibonacci
+
+let nonrecfib stop =
+    let mutable x = 0
+    let mutable y = 1
+    for n=0 to stop do
+        printfn "%A: %A" n x
+        let saved = x
+        x <- y      
+        y <- saved + y
+
+// mutable records
+
+type Student = {
+    mutable GPA : float
+    mutable Credits : int
+ }
+let getGpa student = student.GPA
+let setGpa student newGpa = student.GPA <- newGpa
+let setCredits student newCredits  = student.Credits <- student.Credits + newCredits
+
+// tuple stack
+let mkstack =
+    let stk = ref ([]:int list)
+    ((fun x -> stk := x :: (!stk)), // push
+     (fun () -> stk := List.tail (!stk)),// pop
+     (fun () -> List.head (!stk)),
+     (fun () -> List.isEmpty (!stk)))
+
+
+// non recursive factorial using mutable stacks
+let fax n =
+    let (push, pop, peek, isEmpty) = mkstack
+    let count = ref n
+    while !count > 0 do
+        push !count
+        count := !count - 1
+    let mutable accm = 1
+    while not(isEmpty()) do
+         accm <- accm * peek()
+         pop()
+    accm
+
+type Palindrome = ALPHA|BETA|GUARD|GOOD|BAD|ERROR of string|EOS
+// S -> a | b | aa | bb | aSa | bSb | (GUARD)
+// So when we have a|a
+// we get S -> aSa -> a|a
+// ex AB|BA
+// S
+// ASA
+// ABSBA
+// AB|BA
+// none of this works
+let rec parse = function
+| "" -> [EOS]
+| s -> 
+        match s.Chars 0 with
+        | 'a' -> ALPHA :: parse (s.Substring 1)
+        | 'b' -> BETA :: parse (s.Substring 1)
+        | '|' -> GUARD :: parse (s.Substring 1)
+        | c -> failwith (sprintf ("%A is not in our language " )c)
+
+let rec S2 = function
+    | [EOS] -> [GOOD]
+    | [ALPHA; EOS] -> [ALPHA; EOS]
+    | [BETA; EOS] -> [BETA; EOS]
+    | GUARD::xs -> xs
+    | ALPHA::xs -> xs |> S2 |> eat ALPHA |> S2
+    | BETA::xs ->  xs |> S2 |> eat BETA |> S2
+    | v -> failwith (sprintf "Got %A" v)
+
+let parsintrp str = parse str |> S2
