@@ -114,32 +114,41 @@ let fax n =
          pop()
     accm
 
-type Palindrome = ALPHA|BETA|GUARD|GOOD|BAD|ERROR of string|EOS
-// S -> a | b | aa | bb | aSa | bSb | (GUARD)
-// So when we have a|a
-// we get S -> aSa -> a|a
-// ex AB|BA
-// S
-// ASA
-// ABSBA
-// AB|BA
-// none of this works
-let rec parse = function
-| "" -> [EOS]
-| s -> 
-        match s.Chars 0 with
-        | 'a' -> ALPHA :: parse (s.Substring 1)
-        | 'b' -> BETA :: parse (s.Substring 1)
-        | '|' -> GUARD :: parse (s.Substring 1)
-        | c -> failwith (sprintf ("%A is not in our language " )c)
+type Palindrome = ALPHA|BETA|GUARD|ERROR of string|EOS
 
-let rec S2 = function
-    | [EOS] -> [GOOD]
-    | [ALPHA; EOS] -> [ALPHA; EOS]
-    | [BETA; EOS] -> [BETA; EOS]
+let rec parse1 = function
+    | ("" , len) -> ([EOS], len)
+    | (s, len) -> match s.Chars 0 with
+                    | 'a' -> let (res, leng) = parse1 (s.Substring 1, len+1)
+                             (ALPHA::res, leng)
+                    | 'b' -> let (res, leng) = parse1 (s.Substring 1, len+1)
+                             (BETA::res, leng)
+                    | v -> failwith (sprintf "%A is not in our language." v)
+let rec parse2 = function
+    | (xs, 0) -> (GUARD::xs, 0)
+    | (x::xs, n) -> let (result, d) = parse2(xs, n-1)
+                    (x::result, d)
+    | ([], _ ) -> failwith "received an empty list."
+
+let parse str = 
+    let (inter, len) = parse1 (str, 0)
+    let (final, d) = parse2 (inter, len/2)
+    (final, len)
+
+
+let rec pE = function
+    | [] -> failwith "Empty list"
     | GUARD::xs -> xs
-    | ALPHA::xs -> xs |> S2 |> eat ALPHA |> S2
-    | BETA::xs ->  xs |> S2 |> eat BETA |> S2
-    | v -> failwith (sprintf "Got %A" v)
+    | ALPHA::xs -> (pE xs) |> eat ALPHA
+    | BETA::xs -> (pE xs) |> eat BETA
+    | v -> failwith (sprintf "Didn't expect %A" v)
+let rec pO = function
+    | [] -> failwith "Empty list"
+    | GUARD::x::xs -> xs
+    | ALPHA::xs -> (pO xs) |> eat ALPHA
+    | BETA::xs -> (pO xs) |> eat BETA
+    | v -> failwith (sprintf "Didn't expect %A" v)
 
-let parsintrp str = parse str |> S2
+let validate str =
+    let (parsed, len) = parse str
+    if len % 2 = 0 then pE parsed else pO parsed

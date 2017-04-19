@@ -39,16 +39,10 @@ let rec interp = function
 | NUM (n) -> NUM (n)
 | BOOL (b) -> BOOL (b)
 | SUCC -> SUCC
-| IF (guard, thenb, elseb) -> match (guard, thenb, elseb) with
-                              | (BOOL (b), e1, e2) -> let e1tok = interp e1
-                                                      let e2tok = interp e2
-                                                      if b = true then e1 else e2 
-                              | (APP(x, y), e1, e2) -> let eval = interp (APP (x,y))
-                                                       match eval with
-                                                        | BOOL (b) -> if b = true then interp e1 else interp e2
-                                                        | v -> ERROR (sprintf "'IF' guard requires a bool not a '%A'" v)
-
-                              | (v, _, _) -> ERROR (sprintf "'IF' guard requires a bool not a '%A'" v)
+| IF (guard, thenb, elseb) -> match interp guard with
+                              | BOOL(true) -> interp thenb
+                              | BOOL(false) -> interp elseb
+                              | v -> ERROR (sprintf "Expected bool got %A" v)
 | PRED -> PRED
 | ISZERO -> ISZERO
 | ID(s) -> ID(s)
